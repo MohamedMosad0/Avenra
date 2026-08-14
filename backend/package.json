@@ -1,0 +1,25 @@
+{
+  "name": "avenra-backend",
+  "version": "1.0.0",
+  "description": "Avenra E-Commerce Minimal REST API Supporting Backend",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc && node -e \"const fs = await import('node:fs'); fs.cpSync('src/data/seed', 'dist/data/seed', { recursive: true });\"",
+    "start": "node dist/server.js",
+    "test": "node --import tsx src/test/api.test.ts && node --import tsx src/test/externalDataProvider.test.ts && node --import tsx src/test/auth.test.ts"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.7",
+    "tsx": "^4.8.2",
+    "typescript": "^5.4.5"
+  }
+}

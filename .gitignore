@@ -1,0 +1,44 @@
+# Android / Gradle build caches & outputs
+.gradle/
+.gradle-cache/
+.verification-gradle-home/
+build/
+*/build/
+app/build/
+local.properties
+Captures/
+
+# Android binaries
+*.apk
+*.aab
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.iml
+.kotlin/
+
+# Test & device inspection artifacts
+*-device.png
+*-device.xml
+home-topbar-*.png
+home-topbar-*.xml
+
+# Logs & OS files
+*.log
+.DS_Store
+Thumbs.db
+
+# Node / Backend runtime & local configuration
+backend/node_modules/
+node_modules/
+backend/dist/
+dist/
+backend/.env
+.env
+backend/src/data/runtime/
+backend/src/data/cache/*.json
+!backend/src/data/cache/.gitkeep
+!backend/src/data/seed/
+!backend/src/data/seed/**
+!backend/.env.example

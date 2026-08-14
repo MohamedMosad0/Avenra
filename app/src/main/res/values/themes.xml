@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Avenra" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/avenra_primary</item>
+        <item name="android:windowBackground">@color/avenra_background</item>
+    </style>
+
+    <style name="Theme.Avenra.Splash" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/ic_avenra_splash_background</item>
+        <item name="android:statusBarColor">@color/avenra_primary</item>
+    </style>
+</resources>

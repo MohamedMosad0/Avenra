@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Group centered within the 66dp adaptive safe zone (x=21..87, y=21..87) -->
+    <group>
+        <!-- Outer Diamond Container (Approved Avenra Primary Blue #004197) -->
+        <path
+            android:fillColor="#FF004197"
+            android:pathData="M 54,25 L 83,54 L 54,83 L 25,54 Z" />
+
+        <!-- Central Concave Star Cutout (Pure White #FFFFFF) -->
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M 54,36 Q 59,49 72,54 Q 59,59 54,72 Q 49,59 36,54 Q 49,49 54,36 Z" />
+    </group>
+
+</vector>

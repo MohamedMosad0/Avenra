@@ -1,0 +1,17 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <!-- Outer Diamond Container (Pure White #FFFFFF) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 50,5 L 95,50 L 50,95 L 5,50 Z" />
+
+    <!-- Central Concave Star Cutout (Primary Brand Blue #004197) -->
+    <path
+        android:fillColor="#FF004197"
+        android:pathData="M 50,22 Q 58,42 78,50 Q 58,58 50,78 Q 42,58 22,50 Q 42,42 50,22 Z" />
+
+</vector>

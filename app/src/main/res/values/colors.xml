@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="avenra_primary">#004197</color>
+    <color name="avenra_dark_navy">#061023</color>
+    <color name="avenra_white">#FFFFFF</color>
+    <color name="avenra_background">#F8F9FA</color>
+    <color name="avenra_surface_variant">#F2F4F7</color>
+</resources>

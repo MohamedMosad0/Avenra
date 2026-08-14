@@ -1,0 +1,16 @@
+[
+  {
+    "id": "banner-1",
+    "title": "Summer Fashion Sale",
+    "subtitle": "Up to 30% OFF on Men & Women Collections",
+    "imageUrl": "/assets/images/banners/banner_fashion.jpg",
+    "targetCategoryId": "cat-women"
+  },
+  {
+    "id": "banner-2",
+    "title": "Audio & Electronics",
+    "subtitle": "Discover premium wireless headphones and gear",
+    "imageUrl": "/assets/images/banners/banner_audio.jpg",
+    "targetCategoryId": "cat-electronics"
+  }
+]
