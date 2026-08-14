@@ -27,7 +27,8 @@ class CheckoutRepository(
 
     suspend fun requestQuote(
         cartItems: List<CartItem>,
-        address: ShippingAddress
+        address: ShippingAddress,
+        deliveryMethod: String = "STANDARD"
     ): Result<CheckoutQuote> {
         val token = sessionStorage.getToken()
             ?: return Result.failure(Exception("No active session found."))
@@ -42,7 +43,7 @@ class CheckoutRepository(
             val requestDto = CheckoutQuoteRequestDto(
                 items = itemDtos,
                 shippingAddress = addressDto,
-                deliveryMethod = "STANDARD"
+                deliveryMethod = deliveryMethod
             )
 
             val response = apiService.createCheckoutQuote("Bearer $token", requestDto)
@@ -67,6 +68,9 @@ class CheckoutRepository(
             )
             Result.success(domainQuote)
         } catch (e: HttpException) {
+            if (e.code() == 401) {
+                sessionStorage.clearSession()
+            }
             val errorMsg = parseErrorMessage(e)
             Result.failure(Exception(errorMsg))
         } catch (e: Exception) {
@@ -106,6 +110,9 @@ class CheckoutRepository(
             )
             Result.success(result)
         } catch (e: HttpException) {
+            if (e.code() == 401) {
+                sessionStorage.clearSession()
+            }
             val errorMsg = parseErrorMessage(e)
             Result.failure(Exception(errorMsg))
         } catch (e: Exception) {

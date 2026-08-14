@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.avenra.app.data.local.session.SessionStorage
 import com.avenra.app.data.local.session.UserSessionStorage
 import com.avenra.app.data.repository.CartRepository
 import com.avenra.app.data.repository.CheckoutRepository
@@ -21,13 +22,16 @@ class CheckoutViewModel(
     application: Application,
     private val checkoutRepository: CheckoutRepository = CheckoutRepository.getInstance(application),
     private val cartRepository: CartRepository = CartRepository.getInstance(application),
-    private val sessionStorage: UserSessionStorage = UserSessionStorage.getInstance(application)
+    private val sessionStorage: SessionStorage = UserSessionStorage.getInstance(application)
 ) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow<CheckoutUiState>(
         CheckoutUiState.AddressForm(shippingAddress = buildInitialAddress())
     )
     val uiState: StateFlow<CheckoutUiState> = _uiState.asStateFlow()
+
+    private var activeIdempotencyKey: String? = null
+    private var isSubmittingOrder = false
 
     private fun buildInitialAddress(): ShippingAddress {
         val profile = sessionStorage.getUserProfile()
@@ -39,7 +43,7 @@ class CheckoutViewModel(
         )
     }
 
-    fun requestQuote(address: ShippingAddress) {
+    fun requestQuote(address: ShippingAddress, deliveryMethod: String = "STANDARD") {
         if (address.fullName.isBlank() || address.phone.isBlank() || address.city.isBlank() || address.addressLine.isBlank()) {
             _uiState.value = CheckoutUiState.AddressForm(
                 shippingAddress = address,
@@ -59,7 +63,8 @@ class CheckoutViewModel(
                 return@launch
             }
 
-            val result = checkoutRepository.requestQuote(currentCartItems, address)
+            activeIdempotencyKey = null
+            val result = checkoutRepository.requestQuote(currentCartItems, address, deliveryMethod)
             result.onSuccess { quote ->
                 _uiState.value = CheckoutUiState.QuoteSuccess(
                     quote = quote,
@@ -83,12 +88,15 @@ class CheckoutViewModel(
 
     fun confirmOrder() {
         val currentState = _uiState.value
-        if (currentState !is CheckoutUiState.QuoteSuccess) return
+        if (currentState !is CheckoutUiState.QuoteSuccess || isSubmittingOrder) return
 
+        isSubmittingOrder = true
         viewModelScope.launch {
             val quote = currentState.quote
             val address = currentState.shippingAddress
-            val idempotencyKey = UUID.randomUUID().toString()
+            val idempotencyKey = activeIdempotencyKey ?: UUID.randomUUID().toString().also {
+                activeIdempotencyKey = it
+            }
 
             _uiState.value = CheckoutUiState.OrderSubmitting
 
@@ -98,7 +106,9 @@ class CheckoutViewModel(
                 idempotencyKey = idempotencyKey
             )
 
+            isSubmittingOrder = false
             result.onSuccess { orderResult ->
+                activeIdempotencyKey = null
                 // ONLY clear cart after successful backend order creation
                 cartRepository.clearCart()
                 _uiState.value = CheckoutUiState.OrderSuccess(orderResult)
@@ -108,6 +118,11 @@ class CheckoutViewModel(
                 val isPriceChanged = msg.contains("PRICE_CHANGED", ignoreCase = true)
                 val isOutOfStock = msg.contains("OUT_OF_STOCK", ignoreCase = true)
                 val isExpired = msg.contains("QUOTE_EXPIRED", ignoreCase = true)
+
+                // If quote is expired or price/stock changed, reset key for fresh quote
+                if (isExpired || isPriceChanged || isOutOfStock) {
+                    activeIdempotencyKey = null
+                }
 
                 _uiState.value = CheckoutUiState.Error(
                     message = msg,

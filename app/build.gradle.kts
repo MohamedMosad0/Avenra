@@ -1,9 +1,18 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.net.URI
 
+val defaultProductionApiBaseUrl = "https://avenra-api.bonto.run/"
+val defaultLocalDebugApiBaseUrl = "http://localhost:3000/"
+
 val releaseApiBaseUrl = providers.gradleProperty("AVENRA_RELEASE_BASE_URL")
     .orElse(providers.environmentVariable("AVENRA_RELEASE_BASE_URL"))
-    .orNull
+    .orElse(defaultProductionApiBaseUrl)
+    .get()
+
+val debugApiBaseUrl = providers.gradleProperty("AVENRA_DEBUG_BASE_URL")
+    .orElse(providers.environmentVariable("AVENRA_DEBUG_BASE_URL"))
+    .orElse(defaultLocalDebugApiBaseUrl)
+    .get()
 
 val releaseStoreFile = providers.gradleProperty("AVENRA_RELEASE_STORE_FILE")
     .orElse(providers.environmentVariable("AVENRA_RELEASE_STORE_FILE"))
@@ -66,12 +75,12 @@ android {
 
     buildTypes {
         debug {
-            // Local development uses ADB reverse to the HTTP backend.
-            buildConfigField("String", "BASE_URL", "\"http://localhost:3000/\"")
+            // Local development uses ADB reverse to the HTTP backend by default, with optional override.
+            buildConfigField("String", "BASE_URL", "\"$debugApiBaseUrl\"")
         }
         release {
-            // Release packaging is blocked below until this is a configured public HTTPS URL.
-            buildConfigField("String", "BASE_URL", "\"${releaseApiBaseUrl.orEmpty()}\"")
+            // Release packaging uses the public HTTPS production API base URL.
+            buildConfigField("String", "BASE_URL", "\"$releaseApiBaseUrl\"")
             if (hasReleaseSigningCredentials) {
                 signingConfig = signingConfigs.getByName("release")
             }

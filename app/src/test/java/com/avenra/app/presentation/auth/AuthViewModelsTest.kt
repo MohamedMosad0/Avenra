@@ -44,6 +44,10 @@ import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
 
+import com.avenra.app.domain.model.DataError
+import com.avenra.app.domain.model.NetworkResult
+import java.io.IOException
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class AuthViewModelsTest {
 
@@ -62,7 +66,10 @@ class AuthViewModelsTest {
     private class FakeApiService(
         var shouldSucceed: Boolean = true,
         var errorCode: String = "ERROR",
-        var errorMessage: String = "Error"
+        var errorMessage: String = "Error",
+        var profileException: Exception? = null,
+        var revokeException: Exception? = null,
+        var revokedTokens: MutableList<String> = mutableListOf()
     ) : ApiService {
         override suspend fun signUp(request: SignUpRequestDto): AuthResponseDto {
             if (!shouldSucceed) {
@@ -102,8 +109,34 @@ class AuthViewModelsTest {
             )
         }
 
-        override suspend fun getProfile(token: String): ProfileResponseDto = throw NotImplementedError()
-        override suspend fun revokeSession(token: String) = Unit
+        override suspend fun getProfile(token: String): ProfileResponseDto {
+            if (profileException != null) {
+                throw profileException!!
+            }
+            if (!shouldSucceed) {
+                val errorBody = "{\"status\":\"error\",\"code\":\"$errorCode\",\"message\":\"$errorMessage\"}"
+                    .toResponseBody("application/json".toMediaTypeOrNull())
+                throw HttpException(Response.error<Any>(401, errorBody))
+            }
+            return ProfileResponseDto(
+                user = UserDto(
+                    id = "usr_restored",
+                    fullName = "Restored Profile User",
+                    email = "restored@avenra.com",
+                    mobileNumber = "01234567890",
+                    address = "Alexandria, Egypt",
+                    createdAt = "2026-08-13T00:00:00Z"
+                )
+            )
+        }
+
+        override suspend fun revokeSession(token: String) {
+            if (revokeException != null) {
+                throw revokeException!!
+            }
+            revokedTokens.add(token)
+        }
+
         override suspend fun getHome(): HomeResponseDto = throw NotImplementedError()
         override suspend fun getCategories(): CategoriesResponseDto = throw NotImplementedError()
         override suspend fun getProducts(categoryId: String?, query: String?): ProductsResponseDto = throw NotImplementedError()
@@ -315,5 +348,154 @@ class AuthViewModelsTest {
         assertTrue(viewModel.uiState.value is AccountUiState.Unauthenticated)
         assertNull(fakeStorage.getUserProfile())
         assertFalse(fakeStorage.isLoggedIn.value)
+    }
+
+    @Test
+    fun fetchCurrentProfile_withValidToken_restoresProfileAndEmitsSuccess() = runTest(testDispatcher) {
+        val fakeApi = FakeApiService(shouldSucceed = true)
+        val fakeStorage = FakeSessionStorage()
+        fakeStorage.saveSession(
+            UserProfile(
+                id = "usr_old",
+                fullName = "Old Name",
+                email = "old@avenra.com",
+                mobileNumber = "",
+                address = "",
+                isLoggedIn = true
+            ),
+            "tok_valid_token"
+        )
+
+        val authRepo = AuthRepository(apiService = fakeApi, sessionStorage = fakeStorage)
+        var emittedResult: NetworkResult<UserProfile>? = null
+        authRepo.fetchCurrentProfile().collect { result ->
+            emittedResult = result
+        }
+
+        assertTrue(emittedResult is NetworkResult.Success)
+        val user = (emittedResult as NetworkResult.Success).data
+        assertEquals("usr_restored", user.id)
+        assertEquals("Restored Profile User", user.fullName)
+        assertEquals("restored@avenra.com", user.email)
+        assertTrue(fakeStorage.isLoggedIn.value)
+    }
+
+    @Test
+    fun fetchCurrentProfile_with401Unauthorized_clearsSessionAndEmitsError() = runTest(testDispatcher) {
+        val fakeApi = FakeApiService(
+            shouldSucceed = false,
+            errorCode = "UNAUTHORIZED",
+            errorMessage = "Invalid or expired token."
+        )
+        val fakeStorage = FakeSessionStorage()
+        fakeStorage.saveSession(
+            UserProfile(
+                id = "usr_expired",
+                fullName = "Expired User",
+                email = "expired@avenra.com",
+                mobileNumber = "",
+                address = "",
+                isLoggedIn = true
+            ),
+            "tok_expired_token"
+        )
+
+        val authRepo = AuthRepository(apiService = fakeApi, sessionStorage = fakeStorage)
+        var emittedResult: NetworkResult<UserProfile>? = null
+        authRepo.fetchCurrentProfile().collect { result ->
+            emittedResult = result
+        }
+
+        assertTrue(emittedResult is NetworkResult.Error)
+        val error = (emittedResult as NetworkResult.Error).error
+        assertTrue(error is DataError.Server)
+        assertEquals(401, (error as DataError.Server).statusCode)
+        assertEquals("UNAUTHORIZED", error.errorCode)
+
+        // Session must be cleared on 401
+        assertFalse(fakeStorage.isLoggedIn.value)
+        assertNull(fakeStorage.getToken())
+        assertNull(fakeStorage.getUserProfile())
+    }
+
+    @Test
+    fun fetchCurrentProfile_withNoToken_emitsUnauthorizedWithoutNetworkCall() = runTest(testDispatcher) {
+        val fakeApi = FakeApiService(shouldSucceed = true)
+        val fakeStorage = FakeSessionStorage() // no saved token
+
+        val authRepo = AuthRepository(apiService = fakeApi, sessionStorage = fakeStorage)
+        var emittedResult: NetworkResult<UserProfile>? = null
+        authRepo.fetchCurrentProfile().collect { result ->
+            emittedResult = result
+        }
+
+        assertTrue(emittedResult is NetworkResult.Error)
+        assertEquals(DataError.Unauthorized, (emittedResult as NetworkResult.Error).error)
+    }
+
+    @Test
+    fun fetchCurrentProfile_withNetworkIOException_fallsBackToCachedProfile() = runTest(testDispatcher) {
+        val fakeApi = FakeApiService(
+            profileException = IOException("Network connection timed out")
+        )
+        val fakeStorage = FakeSessionStorage()
+        val cachedUser = UserProfile(
+            id = "usr_cached",
+            fullName = "Cached Offline User",
+            email = "offline@avenra.com",
+            mobileNumber = "01000000000",
+            address = "Giza",
+            isLoggedIn = true
+        )
+        fakeStorage.saveSession(cachedUser, "tok_offline_token")
+
+        val authRepo = AuthRepository(apiService = fakeApi, sessionStorage = fakeStorage)
+        var emittedResult: NetworkResult<UserProfile>? = null
+        authRepo.fetchCurrentProfile().collect { result ->
+            emittedResult = result
+        }
+
+        // On network error with cache available, cache is returned
+        assertTrue(emittedResult is NetworkResult.Success)
+        assertEquals("usr_cached", (emittedResult as NetworkResult.Success).data.id)
+        assertEquals("Cached Offline User", (emittedResult as NetworkResult.Success).data.fullName)
+        assertTrue(fakeStorage.isLoggedIn.value)
+    }
+
+    @Test
+    fun signOut_invokesRevokeAndClearsLocalSession() = runTest(testDispatcher) {
+        val fakeApi = FakeApiService()
+        val fakeStorage = FakeSessionStorage()
+        fakeStorage.saveSession(
+            UserProfile(id = "u1", fullName = "Name", email = "email@avenra.com", isLoggedIn = true),
+            "tok_to_revoke"
+        )
+
+        val authRepo = AuthRepository(apiService = fakeApi, sessionStorage = fakeStorage)
+        authRepo.signOut()
+
+        assertEquals(1, fakeApi.revokedTokens.size)
+        assertEquals("Bearer tok_to_revoke", fakeApi.revokedTokens[0])
+        assertFalse(fakeStorage.isLoggedIn.value)
+        assertNull(fakeStorage.getToken())
+    }
+
+    @Test
+    fun signOut_whenRevokeThrows_stillClearsLocalSession() = runTest(testDispatcher) {
+        val fakeApi = FakeApiService(
+            revokeException = RuntimeException("Revoke endpoint unreachable")
+        )
+        val fakeStorage = FakeSessionStorage()
+        fakeStorage.saveSession(
+            UserProfile(id = "u1", fullName = "Name", email = "email@avenra.com", isLoggedIn = true),
+            "tok_to_revoke"
+        )
+
+        val authRepo = AuthRepository(apiService = fakeApi, sessionStorage = fakeStorage)
+        authRepo.signOut()
+
+        // Local session must still be cleared
+        assertFalse(fakeStorage.isLoggedIn.value)
+        assertNull(fakeStorage.getToken())
     }
 }
