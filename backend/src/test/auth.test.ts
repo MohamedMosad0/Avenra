@@ -98,6 +98,43 @@ async function runAuthTests() {
     }
     console.log("  PASSED");
 
+    // 2c. Full name length validation
+    console.log("Test 2c: POST /v1/auth/signup rejects empty or single-character full name");
+    const shortNameRes = await fetch(`${baseUrl}/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fullName: "A",
+        email: `valid_${Date.now()}@avenra.com`,
+        password: "ValidPassword123",
+      })
+    });
+    const shortNameData = (await shortNameRes.json()) as any;
+    if (shortNameRes.status !== 400 || shortNameData.code !== "VALIDATION_ERROR") {
+      throw new Error("Short full name was not rejected with 400 VALIDATION_ERROR");
+    }
+    console.log("  PASSED");
+
+    // 2d. Email format validation
+    console.log("Test 2d: POST /v1/auth/signup rejects malformed email formats");
+    const malformedEmails = ["invalid-email", "@no-user.com", "user@", "user@domain", "user space@domain.com"];
+    for (const badEmail of malformedEmails) {
+      const badEmailRes = await fetch(`${baseUrl}/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: "Valid Name",
+          email: badEmail,
+          password: "ValidPassword123",
+        })
+      });
+      const badEmailData = (await badEmailRes.json()) as any;
+      if (badEmailRes.status !== 400 || badEmailData.code !== "VALIDATION_ERROR") {
+        throw new Error(`Expected 400 VALIDATION_ERROR for malformed email '${badEmail}', got ${badEmailRes.status}`);
+      }
+    }
+    console.log("  PASSED");
+
     // 3. Duplicate Email Test
     console.log("Test 3: POST /v1/auth/signup (Duplicate Email)");
     const duplicateRes = await fetch(`${baseUrl}/signup`, {
@@ -221,6 +258,17 @@ async function runAuthTests() {
     if (badTokenRes.status !== 401) {
       throw new Error(`Expected 401 Unauthorized, got ${badTokenRes.status}`);
     }
+    console.log("  PASSED");
+
+    // 8b. GET /v1/auth/me (Missing and Malformed Headers)
+    console.log("Test 8b: GET /v1/auth/me (Missing and Malformed Headers)");
+    const noHeaderRes = await fetch(`${baseUrl}/me`);
+    if (noHeaderRes.status !== 401) throw new Error("Expected missing auth header to return 401");
+
+    const malformedHeaderRes = await fetch(`${baseUrl}/me`, {
+      headers: { Authorization: "Basic dXNlcjpwYXNz" },
+    });
+    if (malformedHeaderRes.status !== 401) throw new Error("Expected Basic auth header to return 401 UNAUTHORIZED");
     console.log("  PASSED");
 
     // 9. Revoke an authenticated session

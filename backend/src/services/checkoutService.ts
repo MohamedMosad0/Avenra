@@ -158,7 +158,6 @@ export class CheckoutService {
     userId: string,
     sessionTokenHash: string,
   ): Order {
-    this.purgeExpiredQuotes();
     if (this.prunePersistedState()) {
       this.persistState();
     }
@@ -189,6 +188,7 @@ export class CheckoutService {
 
     const quote = storedQuote.quote;
     if (new Date() > new Date(quote.quoteExpiry)) {
+      this.quotes.delete(request.quoteId);
       throw new AppError(409, "QUOTE_EXPIRED", "The checkout quote has expired. Please request a new quote.");
     }
 
