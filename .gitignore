@@ -11,6 +11,8 @@ Captures/
 # Android binaries
 *.apk
 *.aab
+avenra-release.jks
+avenra-release.jks.b64
 
 # IDE & Editor files
 .idea/
