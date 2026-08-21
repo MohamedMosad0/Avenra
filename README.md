@@ -4,17 +4,17 @@ Avenra is an Android e-commerce portfolio application built around a Jetpack Com
 
 ## Screenshots
 
-| Home | Categories |
-| --- | --- |
-| ![Home screen](docs/screenshots/home.jpg) | ![Categories screen](docs/screenshots/categories.jpg) |
+<p align="center">
+  <img src="docs/screenshots/home.jpg" width="220" alt="Home screen">
+  <img src="docs/screenshots/categories.jpg" width="220" alt="Categories screen">
+  <img src="docs/screenshots/catalog.jpg" width="220" alt="Catalog screen">
+</p>
 
-| Catalog | Wishlist |
-| --- | --- |
-| ![Catalog screen](docs/screenshots/catalog.jpg) | ![Wishlist screen](docs/screenshots/wishlist.jpg) |
-
-| Cart | Checkout |
-| --- | --- |
-| ![Cart screen](docs/screenshots/cart.jpg) | ![Checkout screen](docs/screenshots/checkout.jpg) |
+<p align="center">
+  <img src="docs/screenshots/wishlist.jpg" width="220" alt="Wishlist screen">
+  <img src="docs/screenshots/cart.jpg" width="220" alt="Cart screen">
+  <img src="docs/screenshots/checkout.jpg" width="220" alt="Checkout screen">
+</p>
 
 ## Features
 
