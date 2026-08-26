@@ -27,42 +27,34 @@ export class ExternalDataProvider implements IExternalDataProvider {
     }
 
     try {
-      const [categoriesRes, subcategoriesRes, productsRes] = await Promise.allSettled([
+      const [categoriesRes, rawSubcategories, rawProducts] = await Promise.all([
         fetch(`${this.baseUrl}/categories`, { signal: AbortSignal.timeout(config.upstreamRequestTimeoutMs) }),
-        fetch(`${this.baseUrl}/subcategories`, { signal: AbortSignal.timeout(config.upstreamRequestTimeoutMs) }),
-        fetch(`${this.baseUrl}/products?limit=100`, { signal: AbortSignal.timeout(config.upstreamRequestTimeoutMs) })
+        this.fetchPaginatedEndpoint("/subcategories"),
+        this.fetchPaginatedEndpoint("/products")
       ]);
 
-      if (categoriesRes.status !== "fulfilled" || !categoriesRes.value.ok) {
+      if (!categoriesRes.ok) {
         console.warn(`[${this.name}] Failed to fetch categories from upstream provider.`);
         return null;
       }
 
-      if (productsRes.status !== "fulfilled" || !productsRes.value.ok) {
+      if (!rawProducts || rawProducts.length === 0) {
         console.warn(`[${this.name}] Failed to fetch products from upstream provider.`);
         return null;
       }
 
-      const categoriesPayload = (await categoriesRes.value.json()) as any;
+      const categoriesPayload = (await categoriesRes.json()) as any;
       const rawCategories: any[] = categoriesPayload?.data || [];
 
-      let rawSubcategories: any[] = [];
-      if (subcategoriesRes.status === "fulfilled" && subcategoriesRes.value.ok) {
-        const subPayload = (await subcategoriesRes.value.json()) as any;
-        rawSubcategories = subPayload?.data || [];
-      }
-
-      const productsPayload = (await productsRes.value.json()) as any;
-      const rawProducts: any[] = productsPayload?.data || [];
-
-      if (!rawCategories.length || !rawProducts.length) {
-        console.warn(`[${this.name}] Upstream provider returned empty payload.`);
+      if (!rawCategories.length) {
+        console.warn(`[${this.name}] Upstream provider returned empty categories.`);
         return null;
       }
 
       // Map Subcategories
       const subcategoriesMap = new Map<string, Subcategory[]>();
-      rawSubcategories.forEach((sub) => {
+      const subcategoriesList = rawSubcategories || [];
+      subcategoriesList.forEach((sub) => {
         const catId = typeof sub.category === "object" ? sub.category?._id || sub.category?.id : sub.category;
         if (catId && (sub._id || sub.id) && sub.name) {
           const item: Subcategory = {
@@ -154,6 +146,49 @@ export class ExternalDataProvider implements IExternalDataProvider {
       };
     } catch (error) {
       console.warn(`[${this.name}] Exception while fetching upstream data:`, error);
+      return null;
+    }
+  }
+
+  private async fetchPaginatedEndpoint(endpoint: string, limit: number = 50): Promise<any[] | null> {
+    try {
+      const firstRes = await fetch(`${this.baseUrl}${endpoint}?limit=${limit}&page=1`, {
+        signal: AbortSignal.timeout(config.upstreamRequestTimeoutMs)
+      });
+      if (!firstRes.ok) {
+        return null;
+      }
+      const firstJson = (await firstRes.json()) as any;
+      const results: any[] = Array.isArray(firstJson?.data) ? [...firstJson.data] : [];
+      const totalPages = Number(firstJson?.metadata?.numberOfPages) || 1;
+
+      if (totalPages > 1) {
+        const pagePromises: Promise<Response>[] = [];
+        for (let page = 2; page <= totalPages; page++) {
+          pagePromises.push(
+            fetch(`${this.baseUrl}${endpoint}?limit=${limit}&page=${page}`, {
+              signal: AbortSignal.timeout(config.upstreamRequestTimeoutMs)
+            })
+          );
+        }
+
+        const pageResponses = await Promise.allSettled(pagePromises);
+        for (let i = 0; i < pageResponses.length; i++) {
+          const pageResult = pageResponses[i];
+          if (pageResult.status !== "fulfilled" || !pageResult.value.ok) {
+            console.warn(`[${this.name}] Failed to fetch page ${i + 2} for ${endpoint}.`);
+            return null;
+          }
+          const pageJson = (await pageResult.value.json()) as any;
+          if (Array.isArray(pageJson?.data)) {
+            results.push(...pageJson.data);
+          }
+        }
+      }
+
+      return results;
+    } catch (error) {
+      console.warn(`[${this.name}] Exception while fetching paginated ${endpoint}:`, error);
       return null;
     }
   }
