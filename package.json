@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "scripts": {
+    "start": "node backend/dist/server.js",
+    "bonto": "node backend/dist/server.js"
+  }
+}
