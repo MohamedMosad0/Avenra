@@ -1,0 +1,29 @@
+[
+  {
+    "id": "cat-women",
+    "name": "Women's Fashion",
+    "imageUrl": "/assets/images/categories/cat_women.jpg",
+    "subcategories": [
+      { "id": "sub-women-dresses", "name": "Dresses", "categoryId": "cat-women" },
+      { "id": "sub-women-tops", "name": "Tops & Shirts", "categoryId": "cat-women" }
+    ]
+  },
+  {
+    "id": "cat-men",
+    "name": "Men's Fashion",
+    "imageUrl": "/assets/images/categories/cat_men.jpg",
+    "subcategories": [
+      { "id": "sub-men-shirts", "name": "Shirts & T-Shirts", "categoryId": "cat-men" },
+      { "id": "sub-men-shoes", "name": "Footwear & Sneakers", "categoryId": "cat-men" }
+    ]
+  },
+  {
+    "id": "cat-electronics",
+    "name": "Electronics & Audio",
+    "imageUrl": "/assets/images/categories/cat_electronics.jpg",
+    "subcategories": [
+      { "id": "sub-elec-headphones", "name": "Headphones & Audio", "categoryId": "cat-electronics" },
+      { "id": "sub-elec-accessories", "name": "Accessories", "categoryId": "cat-electronics" }
+    ]
+  }
+]

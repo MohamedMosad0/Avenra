@@ -34,8 +34,6 @@ Thumbs.db
 # Node / Backend runtime & local configuration
 backend/node_modules/
 node_modules/
-backend/dist/
-dist/
 backend/.env
 .env
 backend/src/data/runtime/

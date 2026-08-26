@@ -6,9 +6,18 @@ import { NormalizedData } from "../providers/externalDataProvider.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const defaultSeedDir = path.join(__dirname, "..", "data", "seed");
-const defaultCacheDir = path.join(__dirname, "..", "data", "cache");
+
+function getDefaultCacheDir(): string {
+  if (process.env.AVENRA_CATALOG_CACHE_DIR) {
+    return process.env.AVENRA_CATALOG_CACHE_DIR;
+  }
+
+  const stateRoot = process.env.LOCALAPPDATA
+    || process.env.XDG_STATE_HOME
+    || path.join(process.env.HOME || process.cwd(), ".local", "state");
+  return path.join(stateRoot, "Avenra", "catalog");
+}
 
 export class CatalogStorage {
   private seedDir: string;
@@ -17,7 +26,7 @@ export class CatalogStorage {
 
   constructor(seedDir?: string, cacheDir?: string) {
     this.seedDir = seedDir || defaultSeedDir;
-    this.cacheDir = cacheDir || defaultCacheDir;
+    this.cacheDir = cacheDir || getDefaultCacheDir();
     this.cacheFile = path.join(this.cacheDir, "catalogCache.json");
   }
 
@@ -36,6 +45,11 @@ export class CatalogStorage {
     try {
       if (fs.existsSync(this.cacheFile)) {
         const raw = fs.readFileSync(this.cacheFile, "utf-8");
+        return JSON.parse(raw);
+      }
+      const legacyCache = path.join(__dirname, "..", "data", "cache", "catalogCache.json");
+      if (fs.existsSync(legacyCache)) {
+        const raw = fs.readFileSync(legacyCache, "utf-8");
         return JSON.parse(raw);
       }
     } catch (e) {

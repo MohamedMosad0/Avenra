@@ -1,0 +1,89 @@
+[
+  {
+    "id": "prod-1",
+    "title": "Classic Woman Shawl",
+    "description": "Elegant multicolour shawl made from premium soft polyester blend.",
+    "price": 149.0,
+    "discountPrice": 120.0,
+    "imageUrl": "/assets/images/products/shawl_cover.jpg",
+    "galleryImages": [
+      "/assets/images/products/shawl_1.jpg",
+      "/assets/images/products/shawl_2.jpg"
+    ],
+    "rating": 4.2,
+    "reviewCount": 37,
+    "categoryId": "cat-women",
+    "isAvailable": true,
+    "availableQuantity": 50,
+    "sizes": ["Free Size"],
+    "colors": ["Multicolour", "Navy Blue"]
+  },
+  {
+    "id": "prod-2",
+    "title": "Nike Air Jordan High",
+    "description": "Premium leather athletic sneakers with responsive cushioning and icon basketball silhouette.",
+    "price": 2500.0,
+    "discountPrice": 2200.0,
+    "imageUrl": "/assets/images/products/jordan_cover.jpg",
+    "galleryImages": [
+      "/assets/images/products/jordan_1.jpg",
+      "/assets/images/products/jordan_2.jpg"
+    ],
+    "rating": 4.8,
+    "reviewCount": 124,
+    "categoryId": "cat-men",
+    "isAvailable": true,
+    "availableQuantity": 25,
+    "sizes": ["38", "39", "40", "41", "42"],
+    "colors": ["Red/White", "Black/Red"]
+  },
+  {
+    "id": "prod-3",
+    "title": "Wireless Noise Cancelling Headphones",
+    "description": "High-fidelity wireless over-ear headphones featuring active noise cancellation and 30-hour battery life.",
+    "price": 899.0,
+    "imageUrl": "/assets/images/products/headphones_cover.jpg",
+    "galleryImages": [
+      "/assets/images/products/headphones_1.jpg"
+    ],
+    "rating": 4.6,
+    "reviewCount": 89,
+    "categoryId": "cat-electronics",
+    "isAvailable": true,
+    "availableQuantity": 15,
+    "colors": ["Matte Black", "Silver Gray"]
+  },
+  {
+    "id": "prod-4",
+    "title": "Cotton Casual Shirt",
+    "description": "Breathable 100% organic cotton shirt designed for everyday comfort and modern style.",
+    "price": 350.0,
+    "discountPrice": 299.0,
+    "imageUrl": "/assets/images/products/shirt_cover.jpg",
+    "galleryImages": [
+      "/assets/images/products/shirt_1.jpg"
+    ],
+    "rating": 4.1,
+    "reviewCount": 42,
+    "categoryId": "cat-men",
+    "isAvailable": true,
+    "availableQuantity": 30,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["Sky Blue", "White"]
+  },
+  {
+    "id": "prod-5",
+    "title": "Limited Edition Out-of-Stock Shoe",
+    "description": "Collector item sneakers currently out of stock.",
+    "price": 4500.0,
+    "imageUrl": "/assets/images/products/jordan_cover.jpg",
+    "galleryImages": [],
+    "rating": 5.0,
+    "reviewCount": 10,
+    "categoryId": "cat-men",
+    "isAvailable": false,
+    "availableQuantity": 0,
+    "sizes": ["42"],
+    "colors": ["Gold"]
+  }
+]
