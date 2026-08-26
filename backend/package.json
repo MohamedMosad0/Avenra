@@ -6,7 +6,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "node -e \"console.log('Prebuilt dist bundle ready')\"",
+    "build": "tsc -p tsconfig.build.json && node -e \"const fs = await import('node:fs'); fs.cpSync('src/data/seed', 'dist/data/seed', { recursive: true });\"",
     "start": "node dist/server.js",
     "bonto": "node backend/dist/server.js",
     "test": "node --import tsx src/test/api.test.ts && node --import tsx src/test/externalDataProvider.test.ts && node --import tsx src/test/auth.test.ts"
