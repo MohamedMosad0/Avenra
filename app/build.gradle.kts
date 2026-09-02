@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.net.URI
 
 val defaultProductionApiBaseUrl = "https://avenra-api.bonto.run/"
-val defaultLocalDebugApiBaseUrl = "http://localhost:3000/"
+val defaultLocalDebugApiBaseUrl = defaultProductionApiBaseUrl
 
 val releaseApiBaseUrl = providers.gradleProperty("AVENRA_RELEASE_BASE_URL")
     .orElse(providers.environmentVariable("AVENRA_RELEASE_BASE_URL"))

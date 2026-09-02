@@ -18,8 +18,17 @@ object NetworkModule {
         }
     }
 
+    private val transientRetryInterceptor: TransientRetryInterceptor by lazy {
+        TransientRetryInterceptor(
+            maxRetries = 2,
+            initialDelayMs = 1000L,
+            backoffMultiplier = 2.0
+        )
+    }
+
     private val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
+            .addInterceptor(transientRetryInterceptor)
             .addInterceptor(loggingInterceptor)
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
